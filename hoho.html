@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>客戶 → 廠商 查詢</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif; margin: 24px; }
+    .box { max-width: 720px; margin: auto; }
+    input, button { font-size: 16px; padding: 10px; }
+    input { width: 100%; box-sizing: border-box; }
+    .row { display: flex; gap: 8px; margin-top: 12px; }
+    .result { margin-top: 16px; padding: 12px; background: #f6f6f6; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
+    .muted { color: #666; font-size: 14px; }
+  </style>
+  <!-- 解析 CSV 用（穩定、好用） -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <div class="box">
+    <h1>客戶 → 廠商 查詢</h1>
+    <p class="muted">資料來源：<code>data/customers.csv</code>（更新 CSV 後重新整理即可）</p>
+
+    <div class="row">
+      <input id="q" placeholder="輸入客戶名稱（支援模糊）" />
+      <button id="searchBtn">查詢</button>
+    </div>
+
+    <div id="result" class="result" style="display:none;"></div>
+
+    <h3>全部資料</h3>
+    <input id="filter" placeholder="即時篩選（客戶或廠商）" />
+    <table id="table">
+      <thead>
+        <tr><th>客戶（customer）</th><th>廠商（vendor）</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>
