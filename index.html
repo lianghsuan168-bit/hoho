@@ -182,7 +182,7 @@ document.getElementById('refreshNow').addEventListener('click', () => {
   }
 })();
 
-const WRITE_ENDPOINT = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQRTM0BQJDOPtmfbLqcWYeQNVI7ilZGELtLf3tSTZysN9qEo8rf6tj4rHRz0yfkR6_MY99BzP-02COs/pub?output=csv'; 
+const WRITE_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwRO0nHYJ6IxFxDPGIS_FfO5ROUViOf3UFzfOgnzo97xdmSjf0xBZBN6X8wLnNkgbzf/exec'; 
 
 document.getElementById('addBtn').addEventListener('click', async () => {
 const customer = document.getElementById('name').value.trim();
@@ -206,6 +206,7 @@ alert('新增失敗：' + (data.error || ''));
 </script>
 </body>
 </html>
+
 
 
 
