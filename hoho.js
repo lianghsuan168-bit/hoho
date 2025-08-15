@@ -1,4 +1,4 @@
-const CSV_PATH = './data/customers.csv';
+const CSV_PATH = './file.csv';
 
 let rows = [];               // 原始資料：[{customer, vendor}, ...]
 let customerMap = new Map(); // 精準查詢：customer(lower) -> vendor
@@ -97,4 +97,5 @@ document.getElementById('searchBtn').addEventListener('click', search);
 document.getElementById('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
 
 setupFilter();
+
 loadCSV();
