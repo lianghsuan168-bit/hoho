@@ -27,7 +27,6 @@
   <h1>CSV SQL 查詢</h1>
   <p class="muted">
     資料來源：<code>data/customers.csv</code>（需為 UTF-8；第一列表頭 <code>customer,vendor</code>）。<br>
-    範例：<code>SELECT * FROM customers WHERE UPPER(customer) LIKE UPPER('%王%')</code>
   </p>
 
   <!-- 快速條件查詢 -->
@@ -35,14 +34,6 @@
     <input id="q" placeholder="輸入客戶名稱（模糊）" />
     <button id="btnLike" type="button">用 LIKE 查詢</button>
     <button id="btnExact" type="button">精準查詢</button>
-  </div>
-
-  <!-- SQL 區 -->
-  <textarea id="sqlBox">SELECT * FROM customers LIMIT 20;</textarea>
-  <div class="row">
-    <button id="run" type="button">執行 SQL</button>
-    <button id="showAll" type="button">顯示所有（上限 500）</button>
-    <span id="status" class="muted"></span>
   </div>
 
   <!-- 結果表 -->
@@ -148,3 +139,4 @@
 </div>
 </body>
 </html>
+
