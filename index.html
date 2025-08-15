@@ -184,27 +184,31 @@ document.getElementById('refreshNow').addEventListener('click', () => {
 
 const WRITE_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwRO0nHYJ6IxFxDPGIS_FfO5ROUViOf3UFzfOgnzo97xdmSjf0xBZBN6X8wLnNkgbzf/exec'; 
 
-document.getElementById('addBtn').addEventListener('click', async () => {
-const customer = document.getElementById('name').value.trim();
-const vendor = document.getElementById('vendor').value.trim();
-if (!customer || !vendor) { alert('廠商和客人都要填哦!!'); return; }
-
-const res = await fetch(WRITE_ENDPOINT, {
-  method: 'POST',
-  body: new URLSearchParams({ customer, vendor })
-});
-const data = await res.json();
-if (data.ok) {
-  alert('已新增');
-  // 立刻刷新顯示（你先前的即時更新輪詢可保留；也可手動觸發 refresh）
-  if (typeof refreshDataIfChanged === 'function') refreshDataIfChanged();
-} else {
-  alert('新增失敗：' + (data.error || ''));
-}
+document.getElementById('addBtn').addEventListener('click', async (ev) => {
+  ev.preventDefault();
+  const customer = document.getElementById('name').value.trim();
+  const vendor = document.getElementById('vendor').value.trim();
+  if (!customer || !vendor) { alert('廠商和客人都要填哦!!'); return; }
+  
+  const res = await fetch(WRITE_ENDPOINT, {
+    method: 'POST',
+    body: new URLSearchParams({ customer, vendor })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    alert('已新增');
+    // 立刻刷新顯示（你先前的即時更新輪詢可保留；也可手動觸發 refresh）
+    if (typeof rerunCurrentQuery === 'function') rerunCurrentQuery();
+    else if (typeof refreshDataIfChanged === 'function') refreshDataIfChanged();
+  } else {
+    alert('新增失敗：' + (data.error || ''));
+  }
+  return false;
 });
 </script>
 </body>
 </html>
+
 
 
 
