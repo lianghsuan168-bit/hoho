@@ -2,57 +2,149 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>客戶 → 廠商 查詢</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CSV SQL 查詢</title>
   <style>
     body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif; margin: 24px; }
-    .box { max-width: 720px; margin: auto; }
-    input, button { font-size: 16px; padding: 10px; }
-    input { width: 100%; box-sizing: border-box; }
-    .row { display: flex; gap: 8px; margin-top: 12px; }
-    .result { margin-top: 16px; padding: 12px; background: #f6f6f6; border-radius: 8px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-    th, td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
-    .muted { color: #666; font-size: 14px; }
+    .wrap { max-width: 900px; margin: auto; }
+    textarea, input, button { font-size: 16px; }
+    textarea { width: 100%; height: 120px; box-sizing: border-box; }
+    .row { display:flex; gap:8px; margin: 8px 0; flex-wrap: wrap; }
+    .muted { color:#666; font-size: 14px; }
+    table { width:100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border-bottom:1px solid #eee; padding:8px; text-align:left; }
+    #status { margin: 6px 0; }
+    code { background:#f6f6f6; padding:2px 4px; border-radius:4px; }
   </style>
-  <!-- 解析 CSV 用（穩定、好用） -->
+
+  <!-- 讀 CSV -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- 在瀏覽器用 SQL -->
+  <script src="https://cdn.jsdelivr.net/npm/alasql"></script>
 </head>
 <body>
-  <div class="box">
-    <h1>客戶 → 廠商 查詢</h1>
-    <p class="muted">資料來源：<code>./data/customers.csv</code>（更新 CSV 後重新整理即可）</p>
+<div class="wrap">
+  <h1>CSV SQL 查詢</h1>
+  <p class="muted">
+    資料來源：<code>data/customers.csv</code>（需為 UTF-8；第一列表頭 <code>customer,vendor</code>）。<br>
+    範例：<code>SELECT * FROM customers WHERE UPPER(customer) LIKE UPPER('%王%')</code>
+  </p>
 
-    <div class="row">
-      <input id="q" placeholder="輸入客戶名稱（支援模糊）" />
-      <button id="searchBtn" type="button">查詢</button>
-    </div>
-
-    <div id="result" class="result" style="display:none;"></div>
-
-    <h3>全部資料</h3>
-    <input id="filter" placeholder="即時篩選（客戶或廠商）" />
-    <table id="table">
-      <thead>
-        <tr><th>客戶（customer）</th><th>廠商（vendor）</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <!-- 快速條件查詢 -->
+  <div class="row">
+    <input id="q" placeholder="輸入客戶名稱（模糊）" />
+    <button id="btnLike" type="button">用 LIKE 查詢</button>
+    <button id="btnExact" type="button">精準查詢</button>
   </div>
-  <div class="muted">最後更新：<span id="lastUpdate">—</span>（每 30 秒自動檢查）</div>
-  <button id="refreshNow" onclick="refreshDataIfChanged()">立即同步</button>
 
-  <script src="./hoho.js?v=20250815"></script>
+  <!-- SQL 區 -->
+  <textarea id="sqlBox">SELECT * FROM customers LIMIT 20;</textarea>
+  <div class="row">
+    <button id="run" type="button">執行 SQL</button>
+    <button id="showAll" type="button">顯示所有（上限 500）</button>
+    <span id="status" class="muted"></span>
+  </div>
+
+  <!-- 結果表 -->
+  <div id="result"></div>
+
+  <script>
+  // ===== 設定 =====
+  const CSV_PATH = './data/customers.csv'; // 依你的實際路徑
+  const MAX_SHOW = 500;                    // 顯示上限，避免超大表卡住
+
+  // ===== 載入 CSV → 建表 =====
+  let ROWS = [];
+  async function loadCsvAndBuildTable(){
+    setStatus('載入資料中…');
+    const res = await fetch(CSV_PATH + '?v=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('CSV 載入失敗：' + res.status);
+    const text = await res.text();
+
+    // 解析（有表頭）
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+    if (!parsed.meta.fields?.includes('customer') || !parsed.meta.fields?.includes('vendor')) {
+      throw new Error('CSV 表頭需包含 customer,vendor');
+    }
+    ROWS = parsed.data.map(r => ({
+      customer: String(r.customer ?? '').trim(),
+      vendor:   String(r.vendor ?? '').trim()
+    }));
+
+    // 建表
+    alasql('DROP TABLE IF EXISTS customers');
+    alasql('CREATE TABLE customers (customer STRING, vendor STRING)');
+    alasql.tables.customers.data = ROWS;
+
+    setStatus(`✅ 已載入 ${ROWS.length} 筆`);
+    // 預覽 20 筆
+    renderTable(alasql('SELECT * FROM customers LIMIT 20'));
+  }
+
+  // ===== UI 綁定 =====
+  function setStatus(msg){ document.getElementById('status').textContent = msg || ''; }
+
+  function renderTable(data){
+    const result = document.getElementById('result');
+    if (!data || data.length === 0) { result.innerHTML = '<p>（無資料）</p>'; return; }
+    const head = Object.keys(data[0]);
+    const rows = data.slice(0, MAX_SHOW);
+    const thead = '<thead><tr>' + head.map(h=>`<th>${escapeHtml(h)}</th>`).join('') + '</tr></thead>';
+    const tbody = '<tbody>' + rows.map(r =>
+      '<tr>' + head.map(h => `<td>${escapeHtml(r[h])}</td>`).join('') + '</tr>'
+    ).join('') + '</tbody>';
+    result.innerHTML = `<table>${thead}${tbody}</table>` + (data.length > MAX_SHOW ? `<div class="muted">只顯示前 ${MAX_SHOW} 筆</div>`:'');
+  }
+  function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // 執行 SQL
+  function runSql(){
+    const sql = document.getElementById('sqlBox').value.trim();
+    if (!sql) return;
+    try {
+      const t0 = performance.now();
+      const data = alasql(sql);
+      const t1 = performance.now();
+      setStatus(`查到 ${Array.isArray(data)?data.length:0} 筆（${(t1-t0).toFixed(1)} ms）`);
+      renderTable(Array.isArray(data)?data:[]);
+    } catch (e) {
+      setStatus('❌ SQL 錯誤：' + e.message);
+      console.error(e);
+    }
+  }
+
+  // LIKE / 精準 快捷
+  function quoteLike(s){
+    // 轉義單引號
+    return s.replace(/'/g, "''");
+  }
+
+  document.getElementById('run').addEventListener('click', runSql);
+  document.getElementById('showAll').addEventListener('click', () => {
+    document.getElementById('sqlBox').value = `SELECT * FROM customers LIMIT ${MAX_SHOW};`;
+    runSql();
+  });
+
+  document.getElementById('btnLike').addEventListener('click', () => {
+    const q = document.getElementById('q').value.trim();
+    const sql = q
+      ? `SELECT * FROM customers WHERE UPPER(customer) LIKE UPPER('%${quoteLike(q)}%');`
+      : `SELECT * FROM customers LIMIT 20;`;
+    document.getElementById('sqlBox').value = sql;
+    runSql();
+  });
+
+  document.getElementById('btnExact').addEventListener('click', () => {
+    const q = document.getElementById('q').value.trim();
+    if (!q) return;
+    document.getElementById('sqlBox').value =
+      `SELECT * FROM customers WHERE customer = '${quoteLike(q)}';`;
+    runSql();
+  });
+
+  // 進頁即載資料
+  loadCsvAndBuildTable().catch(e => { setStatus('❌ ' + e.message); console.error(e); });
+  </script>
+</div>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
