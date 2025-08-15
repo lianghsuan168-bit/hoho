@@ -36,6 +36,14 @@
     <button id="btnExact" type="button">精準查詢</button>
   </div>
 
+  <!-- SQL 區 -->
+  <textarea id="sqlBox">SELECT * FROM customers LIMIT 20;</textarea>
+  <div class="row">
+    <button id="run" type="button">執行 SQL</button>
+    <button id="showAll" type="button">顯示所有（上限 500）</button>
+    <button id="refreshNow" type="button">立即同步</button>
+    <span id="status" class="muted"></span>
+  </div>
   <!-- 結果表 -->
   <div id="result"></div>
 
@@ -139,4 +147,5 @@
 </div>
 </body>
 </html>
+
 
