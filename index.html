@@ -190,23 +190,22 @@ const vendor = document.getElementById('vendor').value.trim();
 if (!customer || !vendor) { alert('廠商和客人都要填哦!!'); return; }
 
 const res = await fetch(WRITE_ENDPOINT, {
-method: 'POST',
-// headers: { 'Content-Type':'application/json' },
-// body: JSON.stringify({ customer, vendor })
-body: new URLSearchParams({ customer, vendor })
+  method: 'POST',
+  body: new URLSearchParams({ customer, vendor })
 });
 const data = await res.json();
 if (data.ok) {
-alert('已新增');
-// 立刻刷新顯示（你先前的即時更新輪詢可保留；也可手動觸發 refresh）
-if (typeof refreshDataIfChanged === 'function') refreshDataIfChanged();
+  alert('已新增');
+  // 立刻刷新顯示（你先前的即時更新輪詢可保留；也可手動觸發 refresh）
+  if (typeof refreshDataIfChanged === 'function') refreshDataIfChanged();
 } else {
-alert('新增失敗：' + (data.error || ''));
+  alert('新增失敗：' + (data.error || ''));
 }
 });
 </script>
 </body>
 </html>
+
 
 
 
