@@ -38,10 +38,19 @@
 
   <div id="result"></div>
 </div>
+<div class = "wrap">
+  <h1>客戶 & 廠商 新增</h1>
+  <div class = "row">
+    <input id="name" placeholder="客戶名稱" />
+    <input id="vendor" placeholder="廠商名稱" />
+    <button id="addBtn" type="button">新增</button>
+  </div>
+</div>
+
 
 <script>
 /** === 設定 === */
-const CSV_PATH   = './data/customers.csv'; // 依你的實際路徑
+const CSV_PATH   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQRTM0BQJDOPtmfbLqcWYeQNVI7ilZGELtLf3tSTZysN9qEo8rf6tj4rHRz0yfkR6_MY99BzP-02COs/pub?output=csv'; // 依你的實際路徑
 const REFRESH_MS = 30_000;                 // 自動同步間隔（毫秒）
 const MAX_SHOW   = 500;                    // 顯示上限
 
@@ -171,6 +180,29 @@ document.getElementById('refreshNow').addEventListener('click', () => {
     console.error(e);
   }
 })();
+
+const WRITE_ENDPOINT = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQRTM0BQJDOPtmfbLqcWYeQNVI7ilZGELtLf3tSTZysN9qEo8rf6tj4rHRz0yfkR6_MY99BzP-02COs/pub?output=csv'; 
+
+document.getElementById('addBtn').addEventListener('click', async () => {
+const customer = document.getElementById('name').value.trim();
+const vendor = document.getElementById('vendor').value.trim();
+if (!customer || !vendor) { alert('廠商和客人都要填哦!!'); return; }
+
+const res = await fetch(WRITE_ENDPOINT, {
+method: 'POST',
+headers: { 'Content-Type':'application/json' },
+body: JSON.stringify({ customer, vendor })
+});
+const data = await res.json();
+if (data.ok) {
+alert('已新增');
+// 立刻刷新顯示（你先前的即時更新輪詢可保留；也可手動觸發 refresh）
+if (typeof refreshDataIfChanged === 'function') refreshDataIfChanged();
+} else {
+alert('新增失敗：' + (data.error || ''));
+}
+});
 </script>
 </body>
 </html>
+
