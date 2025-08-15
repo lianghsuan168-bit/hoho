@@ -39,8 +39,52 @@
       <tbody></tbody>
     </table>
   </div>
+  <!-- 在 body 最底加一個診斷區塊 -->
+  <div id="debug" style="white-space:pre; font:12px/1.4 monospace; padding:8px; background:#f6f6f6; border:1px solid #ddd; margin-top:12px;"></div>
+  <script>
+  const DEBUG = document.getElementById('debug');
+  const CSV_PATH = './data/customers.csv'; // 依你的實際路徑改
+  
+  function log(...args){ DEBUG.textContent += args.join(' ') + '\n'; console.log(...args); }
+  
+  fetch(`${CSV_PATH}?v=${Date.now()}`, { cache: 'no-store' })
+    .then(r => { log('HTTP status:', r.status, r.statusText, 'URL:', r.url); if (!r.ok) throw new Error('Fetch 失敗'); return r.text(); })
+    .then(text => {
+      log('CSV 長度:', text.length);
+      // 嘗試自動偵測分隔符（逗號或分號或 Tab）
+      const delim = text.includes(',') ? ',' : (text.includes('\t') ? '\t' : ';');
+      log('偵測分隔符:', JSON.stringify(delim));
+  
+      // 用 PapaParse 解析（若你沒引入，就先 <script> 引入）
+      if (!window.Papa) { log('⚠️ 沒載入 PapaParse，請在 <head> 加上 CDN Script'); return; }
+      const parsed = Papa.parse(text, { header: true, skipEmptyLines: true, delimiter: delim });
+      log('欄位名稱(keys):', Object.keys(parsed.data[0] || {}).join(' | '));
+      log('資料筆數:', parsed.data.length);
+  
+      // 嘗試對應多種可能欄位名
+      const nameKeys = ['customer','客戶','客戶名稱','名稱'];
+      const vendorKeys = ['vendor','廠商','廠商名稱','供應商'];
+      function pick(obj, keys){ for (const k of keys) if (obj[k] != null && obj[k] !== '') return obj[k]; return ''; }
+  
+      const rows = parsed.data.map(r => ({
+        customer: String(pick(r, nameKeys)).trim(),
+        vendor: String(pick(r, vendorKeys)).trim()
+      })).filter(r => r.customer || r.vendor);
+  
+      log('對映後有效筆數:', rows.length);
+      log('前3筆預覽:', JSON.stringify(rows.slice(0,3), null, 2));
+  
+      if (rows.length === 0) {
+        log('❌ 沒資料：請檢查 CSV 欄位名稱是否為「customer/vendor」或「客戶/廠商」，以及分隔符。');
+      } else {
+        log('✅ 解析成功，接下來用 rows 做搜尋即可。');
+      }
+    })
+    .catch(err => log('❌ 錯誤：', err.message));
+  </script>
 
   <script src="./hoho.js"></script>
 </body>
 
 </html>
+
