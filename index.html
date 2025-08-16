@@ -13,6 +13,16 @@
     table { width:100%; border-collapse: collapse; margin-top: 12px; }
     th, td { border-bottom:1px solid #eee; padding:8px; text-align:left; }
     #status { margin-left: 8px; }
+
+   /* Tabs 外觀 */
+    .tabs { display:flex; gap:8px; border-bottom:1px solid #eee; margin:16px 0 12px; }
+    .tab-btn {
+      appearance:none; border:none; background:transparent; padding:10px 14px;
+      font-size:16px; cursor:pointer; border-radius:10px 10px 0 0;
+    }
+    .tab-btn[aria-selected="true"] { background:#f5f5f7; font-weight:600; }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
   </style>
   <!-- 讀 CSV -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -21,30 +31,42 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>客戶 → 廠商 查詢</h1>
-  <p class="muted">
-    資料來源：<code>data/customers.csv</code>（UTF-8，表頭 <code>customer,vendor</code>）。頁面每 30 秒自動同步。<br>
-    <span>最後同步時間：<span id="lastUpdate">—</span></span>
-  </p>
+  <h1>客戶 → 廠商</h1>
 
-  <!-- 使用者只看到這些 -->
-  <div class="row">
-    <input id="q" placeholder="輸入客戶名稱（支援模糊）" />
-    <button id="btnLike" type="button">查詢</button>
-    <button id="btnExact" type="button">精準</button>
-    <button id="refreshNow" type="button">立即同步</button>
-    <span id="status" class="muted"></span>
+  <!-- 分頁按鈕 -->
+  <div class="tabs" role="tablist" aria-label="功能分頁">
+    <button class="tab-btn" role="tab" id="tab-search" aria-controls="panel-search" aria-selected="true">查詢</button>
+    <button class="tab-btn" role="tab" id="tab-add" aria-controls="panel-add" aria-selected="false">新增</button>
   </div>
 
-  <div id="result"></div>
+  <!-- 查詢面板 -->
+  <section id="panel-search" class="tab-panel active" role="tabpanel" aria-labelledby="tab-search">
+    <p class="muted">
+      資料來源：<code>data/customers.csv</code>（UTF-8，表頭 <code>customer,vendor</code>）。頁面每 30 秒自動同步。<br>
+      <span>最後同步時間：<span id="lastUpdate">—</span></span>
+    </p>
 
-  <h1>客戶 & 廠商 新增</h1>
-  <H2>(***兩個欄位皆不可只輸入數字***</H2>
-  <div class = "row">
-    <input id="name" placeholder="客戶名稱" />
-    <input id="vendor" placeholder="廠商名稱" />
-    <button id="addBtn" type="button">新增</button>
-  </div>
+    <div class="row">
+      <input id="q" placeholder="輸入客戶名稱（支援模糊）" />
+      <button id="btnLike" type="button">查詢</button>
+      <button id="btnExact" type="button">精準</button>
+      <button id="refreshNow" type="button">立即同步</button>
+      <span id="status" class="muted"></span>
+    </div>
+
+    <div id="result"></div>
+  </section>
+
+  <!-- 新增面板 -->
+  <section id="panel-add" class="tab-panel" role="tabpanel" aria-labelledby="tab-add">
+    <h2>客戶 & 廠商 新增</h2>
+    <p class="muted">（***兩個欄位皆不可只輸入數字***）</p>
+    <div class="row">
+      <input id="name" placeholder="客戶名稱" />
+      <input id="vendor" placeholder="廠商名稱" />
+      <button id="addBtn" type="button">新增</button>
+    </div>
+  </section>
 </div>
 
 
@@ -228,9 +250,32 @@ addBtn.addEventListener('click', async (ev) => {
 
   return false;
 });
+(function setupTabs(){
+    const tabs = [
+      { btn: document.getElementById('tab-search'), panel: document.getElementById('panel-search') },
+      { btn: document.getElementById('tab-add'),    panel: document.getElementById('panel-add') },
+    ];
+    function activate(idx){
+      tabs.forEach((t,i) => {
+        t.btn.setAttribute('aria-selected', i===idx ? 'true' : 'false');
+        t.panel.classList.toggle('active', i===idx);
+      });
+      // UX：切到查詢分頁時讓輸入框自動聚焦
+      if (idx===0) setTimeout(()=>document.getElementById('q')?.focus(), 0);
+      if (idx===1) setTimeout(()=>document.getElementById('name')?.focus(), 0);
+      // 可選：把分頁狀態寫到網址 #hash
+      const hash = idx===0 ? '#search' : '#add';
+      if (location.hash !== hash) history.replaceState(null, '', hash);
+    }
+    tabs[0].btn.addEventListener('click', () => activate(0));
+    tabs[1].btn.addEventListener('click', () => activate(1));
+    // 依網址 hash 初始定位
+    if (location.hash === '#add') activate(1); else activate(0);
+  })();
 </script>
 </body>
 </html>
+
 
 
 
