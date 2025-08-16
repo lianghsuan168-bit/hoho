@@ -39,6 +39,7 @@
   <div id="result"></div>
 
   <h1>客戶 & 廠商 新增</h1>
+  <H2>(***兩個欄位皆不可只輸入數字***</H2>
   <div class = "row">
     <input id="name" placeholder="客戶名稱" />
     <input id="vendor" placeholder="廠商名稱" />
@@ -194,7 +195,7 @@ addBtn.addEventListener('click', async (ev) => {
   if (!customer || !vendor) { alert('廠商和客人都要填哦!!'); return; }
   
   // 鎖定按鈕並倒數 15 秒
-  let remaining = 15;
+  let remaining = 5;
   addBtn.disabled = true;
   const originalText = addBtn.textContent;
   addBtn.textContent = `請稍候 ${remaining} 秒`;
@@ -230,6 +231,7 @@ addBtn.addEventListener('click', async (ev) => {
 </script>
 </body>
 </html>
+
 
 
 
